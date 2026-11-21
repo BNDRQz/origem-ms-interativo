@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Origem — Arquitetura de marca</title>
+<style>
+  @font-face { font-family: "Bricolage"; src: url("assets/BricolageGrotesque_72pt-ExtraBold.ttf") format("truetype"); font-weight: 800; font-display: swap; }
+  @font-face { font-family: "Hanken"; src: url("assets/HankenGrotesk-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+  @font-face { font-family: "Hanken"; src: url("assets/HankenGrotesk-SemiBold.ttf") format("truetype"); font-weight: 600; font-display: swap; }
+
+  :root {
+    --terracota: #af5219;
+    --oliva: #484822;
+    --ocre: #d39444;
+    --carvao: #1a1a1a;
+    --areia: #ede1ca;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--areia);
+    color: var(--carvao);
+    font-family: "Hanken", system-ui, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { height: 100%; display: grid; grid-template-rows: auto 1fr auto; padding: 44px 48px 40px; gap: 16px; }
+
+  .eyebrow { font-weight: 600; font-size: 12px; letter-spacing: .34em; text-transform: uppercase; color: var(--oliva); }
+  .lead { font-family: "Bricolage", sans-serif; font-weight: 800; font-size: clamp(22px, 3.4vw, 40px); line-height: 1.08; margin-top: 10px; max-width: 18ch; }
+
+  .stage { position: relative; display: grid; place-items: center; min-height: 0; }
+  .marks { position: relative; width: 100%; height: 100%; }
+  .marks img {
+    position: absolute; inset: 0; margin: auto;
+    max-width: min(88%, 900px); max-height: 100%;
+    object-fit: contain;
+    opacity: 0; transition: opacity .38s ease;
+  }
+  .marks img.on { opacity: 1; }
+
+  .panel { display: grid; gap: 16px; }
+  .ufs { display: flex; gap: 10px; flex-wrap: wrap; }
+  button {
+    font: inherit; font-weight: 600; cursor: pointer;
+    color: var(--carvao); background: transparent;
+    border: 1.5px solid rgba(175,82,25,.45); border-radius: 999px;
+    padding: 11px 22px; font-size: 14px; letter-spacing: .16em;
+    transition: background .2s, border-color .2s, color .2s, transform .12s;
+  }
+  button:hover { border-color: var(--terracota); }
+  button:active { transform: scale(.97); }
+  button:focus-visible { outline: 2px solid var(--carvao); outline-offset: 3px; }
+  button[aria-pressed="true"] { background: var(--carvao); border-color: var(--carvao); color: var(--areia); }
+
+  .note { font-size: 16px; line-height: 1.55; max-width: 68ch; color: #55503f; }
+  .note b { color: var(--oliva); font-weight: 600; }
+
+  @media (max-width: 760px) {
+    .wrap { padding: 28px 20px 26px; }
+    .note { font-size: 14px; }
+    button { padding: 9px 16px; font-size: 13px; letter-spacing: .12em; }
+  }
+  @media (prefers-reduced-motion: reduce) { .marks img { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div>
+    <div class="eyebrow">Arquitetura de marca</div>
+    <p class="lead">A mesma marca, outro estado.</p>
+  </div>
+
+  <div class="stage">
+    <div class="marks" id="marks"></div>
+  </div>
+
+  <div class="panel">
+    <div class="ufs" id="ufs"></div>
+    <p class="note" id="note" aria-live="polite"></p>
+  </div>
+</div>
+
+<script>
+(function () {
+  var UFS = [
+    ["ms", "MS", "Mato Grosso do Sul"],
+    ["mt", "MT", "Mato Grosso"],
+    ["df", "DF", "Distrito Federal"],
+    ["sp", "SP", "São Paulo"],
+    ["rj", "RJ", "Rio de Janeiro"],
+    ["ba", "BA", "Bahia"]
+  ];
+  var marks = document.getElementById("marks");
+  var ufs = document.getElementById("ufs");
+  var note = document.getElementById("note");
+  var imgs = {}, cur = null;
+
+  UFS.forEach(function (u, i) {
+    var im = document.createElement("img");
+    im.src = "assets/uf-" + u[0] + ".png";
+    im.alt = i === 0 ? "Assinatura Origem MS" : "";
+    if (i > 0) im.setAttribute("aria-hidden", "true");
+    marks.appendChild(im);
+    imgs[u[0]] = im;
+
+    var b = document.createElement("button");
+    b.textContent = u[1];
+    b.dataset.uf = u[0];
+    b.setAttribute("aria-pressed", "false");
+    b.setAttribute("aria-label", u[1] + " — " + u[2]);
+    ufs.appendChild(b);
+  });
+
+  function show(uf) {
+    if (cur) imgs[cur].classList.remove("on");
+    cur = uf;
+    imgs[uf].classList.add("on");
+    var row = UFS.filter(function (u) { return u[0] === uf; })[0];
+    imgs[uf].alt = "Assinatura Origem " + row[1];
+    note.innerHTML = uf === "ms"
+      ? "A marca nasceu para <b>Mato Grosso do Sul</b>. O símbolo não é um ícone do estado — é o <b>g</b> de origem, com a folha e o traço de rota."
+      : "Em <b>" + row[2] + "</b>, só a sigla muda. O desenho, a cor e o sistema continuam os mesmos: é o que permite o guia atravessar territórios.";
+    ufs.querySelectorAll("button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.uf === uf));
+    });
+  }
+
+  ufs.addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (b) show(b.dataset.uf);
+  });
+
+  show("ms");
+})();
+</script>
+</body>
+</html>
